@@ -1,0 +1,94 @@
+auto_allowed:
+  - inspection:
+    - pwd
+    - ls
+    - find
+    - tree
+    - readlink
+    - mountpoint
+    - df
+    - lsblk
+    - hostname
+    - ip addr
+    - grep
+    - sed
+    - cat
+    - head
+    - tail
+  - environment_check:
+    - python3 --version
+    - python --version
+    - pip --version
+    - git --version
+    - ssh -V
+    - nvidia-smi
+    - ollama --version
+    - curl http://localhost:11434/api/tags
+  - safe_script:
+    - /project/script/check_lostway_mount.sh
+    - /project/script/check_site_mount.sh
+    - /project/script/check_* 스크립트
+  - ai_hub_file_update:
+    - /project/ai-hub 하위 문서 생성/수정
+    - /project/ai-hub prompt/config/doc 파일 정리
+    - 경로 오타 수정
+    - reference root 경로 통일
+    - 공통 지침과 프로젝트별 지침 분리
+    - 자동 실행 정책 추가
+    - 작업 이력 저장 구조 추가
+    - publish-source 구조 추가
+  - local_test:
+    - Python syntax/import check
+    - mock test
+    - Ollama local API test
+    - model routing mock test
+    - search policy mock test
+  - history_creation:
+    - 작업 시작 기록 생성
+    - 실행 명령 기록
+    - 결과 기록
+    - 실패/보류 기록
+    - 게시용 요약 초안 생성
+
+approval_required:
+  - destructive:
+    - rm -rf
+    - 기존 디렉토리 삭제
+    - 대량 파일 삭제
+    - git reset --hard
+    - git clean
+    - 기존 파일 전체 덮어쓰기
+  - system_change:
+    - apt install
+    - curl | sh
+    - systemd/service 변경
+    - Windows 방화벽 변경
+    - portproxy 실제 등록/삭제
+    - SSH 보안 완화
+    - Cloudflare Tunnel 설정 변경
+  - external_security:
+    - Ollama 11434 LAN/인터넷 공개
+    - secret/token/API key 저장 또는 출력
+    - .env 생성/수정
+    - 외부 API 실제 호출 키 설정
+  - project_source_modification:
+    - /project/bomts-ai 실제 소스 수정
+    - /project/lostway 실제 소스 수정
+    - /project/site 실제 사이트 소스 수정
+    - NUC-main 서비스 파일 수정
+  - git_operation:
+    - commit
+    - push
+    - merge
+    - rebase
+    - tag
+    - release
+  - heavy_resource:
+    - 대형 모델 pull
+    - 새 DB/벡터DB 설치
+    - 장시간 실행 작업
+    - 대량 파일 인덱싱
+
+history_required:
+  - 모든 자동 실행 항목 및 승인/보류된 항목은 doc/history/ 하위(session, event, decision, error)에 기록한다.
+  - 외부 공유 가치가 있는 내용은 doc/publish-source/에 작성한다.

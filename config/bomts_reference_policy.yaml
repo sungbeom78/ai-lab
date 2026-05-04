@@ -1,0 +1,71 @@
+project:
+  name: BOM_TS
+  public_name: "Bomiyang's Trade System"
+  internal_code: bomts
+
+reference:
+  root: /project/ai-hub/doc/reference/bomts
+  type: read_only_document_reference
+
+source_repo:
+  url: https://github.com/sungbeom78/bomiyang-trade-system
+  default_branch: main
+
+priority:
+  - PROJECT_CHARTER.md
+  - .gemini/user_rules.md
+  - .agents/workflow
+  - AGENTS.md
+  - doc/README_AI_GUIDELINE.md
+  - doc/SOURCE_OF_TRUTH.md
+  - doc/module_index.md
+  - doc/guideline
+  - judgment
+
+mandatory_read_before_bomts_task:
+  - PROJECT_CHARTER.md
+  - .gemini/user_rules.md
+  - AGENTS.md
+  - doc/README_AI_GUIDELINE.md
+  - doc/SOURCE_OF_TRUTH.md
+  - doc/module_index.md
+
+mandatory_read_by_task_type:
+  code_change:
+    - .agents/workflow/change-code-procedure.md
+    - .agents/workflow/edit-file-procedure.md
+    - doc/guideline/09_data_flow.md
+    - doc/guideline/10_qa.md
+
+  config_change:
+    - doc/guideline/02_config.md
+    - doc/SOURCE_OF_TRUTH.md
+    - .agents/workflow/edit-file-procedure.md
+
+  identifier_change:
+    - doc/guideline/06_glossary_rules.md
+    - .agents/workflow/new-identifier-procedure.md
+
+  public_web:
+    - doc/guideline/07_public_web.md
+
+  git_commit:
+    - doc/guideline/03_git.md
+    - .agents/workflow/finish-and-push.md
+
+forbidden_without_user_approval:
+  - frozen_zone_change
+  - trading_logic_change
+  - order_execution_change
+  - position_sizing_change
+  - risk_rule_change
+  - api_key_or_secret_change
+  - database_schema_change
+  - new_dependency
+  - auto_deploy
+  - auto_push_to_main
+
+ai_hub_rule:
+  bomts_reference_is_read_only: true
+  do_not_modify_reference_copy_directly: true
+  update_reference_by_sync_only: true

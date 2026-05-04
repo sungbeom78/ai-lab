@@ -1,0 +1,9 @@
+# Desktop WSL AI Hub Environment Verification Executed Report
+
+## 실행 방침 업데이트 (2026-05-03)
+기존에는 작업 전반에 걸쳐 사용자의 승인을 대기하는 방식이었으나, 현재는 **"빠른 자동 실행 + 작업 이력 축적"** 중심으로 정책이 변경되었습니다.
+
+- **안전한 점검 명령(pwd, ls, python --version 등)**은 무조건 즉시 실행합니다.
+- **문서화 및 지침 수정(/project/ai-hub 하위)** 작업은 바로 진행하고 이력을 남깁니다.
+- **사용자 승인**은 소스 코드의 실제 변경, DB 스키마 수정, 보안 설정 변경, 모델 풀(pull) 등 되돌리기 어렵거나 영향이 큰 파괴적/시스템 변경 작업에만 한정합니다.
+- 수행된 모든 검증과 문서 생성 내역은 `/project/ai-hub/doc/history` 및 `/project/ai-hub/doc/publish-source`에 이력으로 남게 됩니다.

@@ -1,0 +1,22 @@
+nohup: ignoring input
+Local AI Web Console
+URL: http://localhost:11004
+LAN URL: http://172.17.108.3:11004
+Press Ctrl+C to stop
+INFO:     Started server process [7512]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:11004 (Press CTRL+C to quit)
+INFO:     127.0.0.1:38994 - "GET /api/apply/site-ahnda-static-mvp/preview HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63118 - "GET / HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63118 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63119 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63120 - "GET /api/jobs HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63122 - "GET / HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63122 - "GET /static/app.js?v=20260503 HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63122 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63123 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63124 - "GET /api/jobs HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63125 - "POST /api/apply/site-ahnda-static-mvp HTTP/1.1" 200 OK
+INFO:     172.17.96.1:59702 - "GET /api/apply/site-ahnda-static-mvp/preview HTTP/1.1" 200 OK
+INFO:     172.17.96.1:59704 - "POST /api/apply/site-ahnda-static-mvp HTTP/1.1" 200 OK

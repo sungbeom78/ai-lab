@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop AI Local Console</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Desktop AI Local Console</h1>
+            <p>Ollama local model job runner</p>
+            <div class="status-bar">
+                <button id="btnHealth" class="btn-small">Check Health</button>
+                <span id="healthStatus" class="badge">Checking...</span>
+            </div>
+        </header>
+
+        <main>
+            <div class="panel controls-panel">
+                <div class="form-group row">
+                    <div class="col">
+                        <label for="modelSelect">Model</label>
+                        <select id="modelSelect">
+                            <option value="">Loading models...</option>
+                        </select>
+                        <button id="btnRefreshModels" class="btn-small">Refresh</button>
+                    </div>
+                    <div class="col">
+                        <label for="projectSelect">Project</label>
+                        <select id="projectSelect">
+                            <option value="ai-hub">ai-hub</option>
+                            <option value="site-ahnda">site-ahnda</option>
+                            <option value="bomts-ai">bomts-ai</option>
+                            <option value="lostway">lostway</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label for="modeSelect">Mode</label>
+                        <select id="modeSelect">
+                            <option value="inspect">inspect</option>
+                            <option value="prepare">prepare</option>
+                            <option value="develop">develop</option>
+                            <option value="validate">validate</option>
+                            <option value="operate">operate</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col">
+                        <label for="temperatureInput">Temperature</label>
+                        <input type="number" id="temperatureInput" value="0.2" step="0.1" min="0" max="1">
+                    </div>
+                    <div class="col checkbox-col">
+                        <label>
+                            <input type="checkbox" id="dryRunCheck"> Dry Run (No Ollama Call)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="taskInput">Task Instructions</label>
+                    <textarea id="taskInput" rows="5" placeholder="Enter task instructions here..."></textarea>
+                </div>
+
+                <button id="btnRun" class="btn-primary">▶ Run Job</button>
+            </div>
+
+            <div class="panel results-panel">
+                <h2>Execution Result <span id="runStatus" class="badge hidden"></span> <button id="btnCopyResult" class="btn-small hidden" style="float:right;">결과 복사</button></h2>
+                
+                <div id="filePaths" class="paths-box hidden">
+                    <strong>Generated Files:</strong>
+                    <ul id="pathsList"></ul>
+                </div>
+
+                <div class="response-box">
+                    <pre id="responseOutput">Result will appear here...</pre>
+                </div>
+            </div>
+
+            <div class="panel safe-apply-panel">
+                <h2>Safe Apply</h2>
+                <div class="form-group">
+                    <button id="btnPreviewAhnda" class="btn-small">ahnda MVP 미리보기</button>
+                    <button id="btnApplyAhnda" class="btn-primary" style="margin-left: 10px;">ahnda MVP 적용</button>
+                </div>
+                <div id="safeApplyResults" class="response-box hidden">
+                    <pre id="safeApplyOutput">결과가 여기에 표시됩니다...</pre>
+                </div>
+            </div>
+
+            <div class="panel history-panel">
+                <h2>Recent Jobs</h2>
+                <ul id="recentJobsList">
+                    <li>Loading...</li>
+                </ul>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Markdown View -->
+    <div id="jobModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="modalTitle">Job Result</h2>
+                <button id="btnCopyModal" class="btn-small">Markdown 복사</button>
+            </div>
+            <div id="modalBody" class="markdown-body"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/app.js?v=20260503"></script>
+</body>
+
+</html>

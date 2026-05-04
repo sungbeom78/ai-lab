@@ -1,0 +1,42 @@
+# ai-lab .gitignore
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local AI generated outputs
+out/local-ai-job/
+out/tmp/
+tmp/
+
+# Runtime/cache/log
+runtime/
+cache/
+log/
+logs/
+
+# Secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.secret
+secrets/
+config/secrets/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Backups
+*.bak
+*.bak_*
