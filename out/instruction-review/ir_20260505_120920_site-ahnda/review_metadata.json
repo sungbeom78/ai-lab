@@ -1,0 +1,22 @@
+{
+  "review_id": "ir_20260505_120920_site-ahnda",
+  "title": "ahnda 캘린더 v1",
+  "target_project": "site-ahnda",
+  "request_type": "development",
+  "reviewer_mode": "local-only",
+  "temperature": 0.2,
+  "timestamp": "2026-05-05 12:09:20",
+  "google_ai_used": false,
+  "models_used": {
+    "all": "local-stub"
+  },
+  "status": "completed",
+  "files": {
+    "v1_original": "/project/ai-hub/out/instruction-review/ir_20260505_120920_site-ahnda/v1_original.md",
+    "v2_stage1": "/project/ai-hub/out/instruction-review/ir_20260505_120920_site-ahnda/v2_stage1_structure_review.md",
+    "v3_stage2": "/project/ai-hub/out/instruction-review/ir_20260505_120920_site-ahnda/v3_stage2_practical_review.md",
+    "v4_stage3": "/project/ai-hub/out/instruction-review/ir_20260505_120920_site-ahnda/v4_stage3_final_approval.md",
+    "metadata": "/project/ai-hub/out/instruction-review/ir_20260505_120920_site-ahnda/review_metadata.json",
+    "summary": "/project/ai-hub/out/instruction-review/ir_20260505_120920_site-ahnda/review_summary.md"
+  }
+}

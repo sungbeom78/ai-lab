@@ -1,0 +1,34 @@
+google_eval:
+  enabled: false
+  provider: google_ai
+  api_key_env: GOOGLE_AI_API_KEY
+  models:
+    stage1_structure_review: "<GOOGLE_EVAL_MODEL_1>"
+    stage2_practical_review: "<GOOGLE_EVAL_MODEL_2>"
+    stage3_final_approval: "<GOOGLE_EVAL_MODEL_3>"
+
+# Instruction Review Pipeline 모델 설정 (실제 모델명은 사용자 확정 후 입력)
+instruction_review:
+  enabled: false
+  models:
+    stage1: "<GOOGLE_EVAL_MODEL_1>"    # 구조 정리 (Flash Lite 계열 권장)
+    stage2: "<GOOGLE_EVAL_MODEL_2>"    # 실전 개발 검증 (Flash 계열 권장)
+    stage3: "<GOOGLE_EVAL_MODEL_3>"    # 최종 승인 (Pro 계열 권장)
+
+# lostway Simulation Google AI 평가 설정
+lostway_simulation_eval:
+  enabled: false
+  sample_ratio: 0.01          # 1%
+  max_eval_count: 10
+  allow_real_user_data: false
+  eval_models:
+    stage1_privacy_safety: "<GOOGLE_EVAL_MODEL_1>"
+    stage2_empathy_quality: "<GOOGLE_EVAL_MODEL_2>"
+    stage3_crisis_final: "<GOOGLE_EVAL_MODEL_3>"
+  eval_output_dir: "/project/lostway/simulation/eval"
+
+# 주의사항:
+# - 실제 API key는 절대 이 파일에 기록하지 않는다.
+# - API key는 .env 파일에 GOOGLE_AI_API_KEY=<value> 형태로 관리한다.
+# - .env 파일은 git에 커밋하지 않는다.
+# - 실제 모델명은 사용자 확정 후 config/google_eval_models.yaml로 복사하여 사용한다.

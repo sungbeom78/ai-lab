@@ -1,0 +1,12 @@
+{
+  "request_id": "ir_20260505_120920_site-ahnda",
+  "review_id": "ir_20260505_120920_site-ahnda",
+  "title": "ahnda 캘린더 v1",
+  "target_project": "site-ahnda",
+  "request_type": "development",
+  "reviewer_mode": "local-only",
+  "timestamp": "2026-05-05 12:09:20",
+  "status": "ready_for_opai",
+  "doc_path": "/project/ai-hub/out/developer-request/ir_20260505_120920_site-ahnda_opai_developer_request.md",
+  "meta_path": "/project/ai-hub/out/developer-request/ir_20260505_120920_site-ahnda_opai_developer_request_metadata.json"
+}

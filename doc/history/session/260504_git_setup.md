@@ -73,58 +73,16 @@ HTTPS push 시 credential 대기 중으로 중단됨.
 **설정 완료:**
 - `credential.helper = store` 설정 완료
 
-## 현재 상태
+## 최종 상태 (2026-05-05)
 
-| 레포 | git init | remote 등록 | 초기 commit | push |
-|------|----------|------------|------------|------|
-| on-premise-ai | ✅ | ✅ | ✅ | ❌ PAT 필요 |
-| ai-lab | ✅ | ✅ | ❌ | ❌ |
-| bomts-ai | ✅ | ✅ | ❌ | ❌ |
-| lostway | ✅ | ✅ | ❌ | ❌ |
-| site-ai | ✅ | ✅ | ❌ | ❌ |
+| 레포 | git init | remote 등록 | 초기 commit | push | 비고 |
+|------|----------|------------|------------|------|------|
+| on-premise-ai | ✅ | ✅ | ✅ `e7930af` | ✅ | .gitignore 추가 commit `54ff7db` |
+| ai-lab | ✅ | ✅ | ✅ `efb23df` | ✅ | |
+| bomts-ai | ✅ | ✅ | ✅ `4b236f3` | ✅ | .gitignore + .gitkeep only (안전) |
+| lostway | ✅ | ✅ | ✅ `0376aa1` | ✅ | .gitignore + .gitkeep only |
+| site-ai | ✅ | ✅ | ✅ `1d477d2` | ✅ | server.log/pid 제거 `871be51` |
 
-## Pending: GitHub 인증 설정
+## 완료
 
-### 방법 A: PAT (Personal Access Token) — 권장
-
-1. GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
-2. 권한: `Contents: Read and Write` (해당 repo 또는 all repos)
-3. 토큰 복사 후:
-   ```bash
-   git -C /project push -u origin main
-   # Username: sungbeom78
-   # Password: <PAT 붙여넣기>
-   ```
-   (credential.helper=store 이므로 한 번만 입력하면 이후 자동 저장)
-
-### 방법 B: SSH 키 GitHub 등록
-
-1. 공개키 확인: `cat ~/.ssh/id_ed25519.pub`
-2. GitHub → Settings → SSH and GPG keys → New SSH key 에 등록
-3. Remote를 SSH로 변경:
-   ```bash
-   git -C /project remote set-url origin git@github.com:sungbeom78/on-premise-ai.git
-   git -C /project/ai-hub remote set-url origin git@github.com:sungbeom78/ai-lab.git
-   git -C /project/bomts-ai remote set-url origin git@github.com:sungbeom78/bomts-ai.git
-   git -C /project/lostway remote set-url origin git@github.com:sungbeom78/lostway.git
-   git -C /project/site remote set-url origin git@github.com:sungbeom78/site-ai.git
-   ```
-
-## 다음 작업 (인증 완료 후)
-
-```bash
-# 1. on-premise-ai push
-cd /project && git push -u origin main
-
-# 2. ai-lab 초기 commit & push
-cd /project/ai-hub && git add . && git commit -m "Initial ai-lab setup" && git push -u origin main
-
-# 3. site-ai 초기 commit & push
-cd /project/site && git add . && git commit -m "Initial site-ai setup" && git push -u origin main
-
-# 4. bomts-ai — push 전 민감 정보 확인 필수
-cd /project/bomts-ai && git status  # 먼저 확인
-
-# 5. lostway 초기 commit & push
-cd /project/lostway && git add . && git commit -m "Initial lostway setup" && git push -u origin main
-```
+모든 레포 초기 push 완료. credential.helper=store 설정으로 이후 push는 자동 인증.

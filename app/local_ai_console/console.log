@@ -20,3 +20,4 @@ INFO:     172.17.96.1:63124 - "GET /api/jobs HTTP/1.1" 200 OK
 INFO:     172.17.96.1:63125 - "POST /api/apply/site-ahnda-static-mvp HTTP/1.1" 200 OK
 INFO:     172.17.96.1:59702 - "GET /api/apply/site-ahnda-static-mvp/preview HTTP/1.1" 200 OK
 INFO:     172.17.96.1:59704 - "POST /api/apply/site-ahnda-static-mvp HTTP/1.1" 200 OK
+bash: script/start_console.sh: No such file or directory

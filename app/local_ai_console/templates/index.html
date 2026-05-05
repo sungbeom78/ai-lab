@@ -1,120 +1,390 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desktop AI Local Console</title>
+    <title>AI Hub Local Console</title>
+    <meta name="description" content="AI Hub - 지침 평가, 작업 생성, Developer Request 생성 및 기록 관리">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Desktop AI Local Console</h1>
-            <p>Ollama local model job runner</p>
-            <div class="status-bar">
-                <button id="btnHealth" class="btn-small">Check Health</button>
-                <span id="healthStatus" class="badge">Checking...</span>
+    <div class="layout">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">⬡</span>
+                    <span class="logo-text">AI Hub</span>
+                </div>
+                <div class="status-row">
+                    <span id="healthDot" class="dot dot-checking"></span>
+                    <span id="healthLabel" class="health-label">확인 중...</span>
+                </div>
             </div>
-        </header>
+            <ul class="nav-list">
+                <li class="nav-item active" data-tab="tab-job-runner" id="nav-job-runner">
+                    <span class="nav-icon">▶</span> Job Runner
+                </li>
+                <li class="nav-item" data-tab="tab-instruction-review" id="nav-instruction-review">
+                    <span class="nav-icon">◈</span> Instruction Review
+                </li>
+                <li class="nav-item" data-tab="tab-developer-requests" id="nav-developer-requests">
+                    <span class="nav-icon">◻</span> Developer Requests
+                </li>
+                <li class="nav-item" data-tab="tab-eval-results" id="nav-eval-results">
+                    <span class="nav-icon">◎</span> Evaluation Results
+                </li>
+                <li class="nav-item" data-tab="tab-openclaw" id="nav-openclaw">
+                    <span class="nav-icon">🤖</span> OpenClaw Chat
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <button id="btnHealth" class="btn-ghost btn-sm">상태 확인</button>
+            </div>
+        </nav>
 
-        <main>
-            <div class="panel controls-panel">
-                <div class="form-group row">
-                    <div class="col">
-                        <label for="modelSelect">Model</label>
-                        <select id="modelSelect">
-                            <option value="">Loading models...</option>
-                        </select>
-                        <button id="btnRefreshModels" class="btn-small">Refresh</button>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- ===== Tab: Job Runner ===== -->
+            <div id="tab-job-runner" class="tab-content active">
+                <div class="page-header">
+                    <h1>Job Runner</h1>
+                    <p class="page-desc">Ollama 로컬 모델을 이용한 AI 작업 실행</p>
+                </div>
+                <div class="card">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="modelSelect">모델</label>
+                            <div class="input-with-btn">
+                                <select id="modelSelect">
+                                    <option value="">모델 로딩 중...</option>
+                                </select>
+                                <button id="btnRefreshModels" class="btn-ghost btn-sm">새로고침</button>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <label for="projectSelect">프로젝트</label>
+                            <select id="projectSelect">
+                                <option value="ai-hub">ai-hub</option>
+                                <option value="site-ahnda">site-ahnda</option>
+                                <option value="lostway">lostway</option>
+                                <option value="bomts-ai">bomts-ai</option>
+                                <option value="legacy-boardgame">legacy-boardgame</option>
+                                <option value="bomTS-Decision">bomTS-Decision</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label for="modeSelect">모드</label>
+                            <select id="modeSelect">
+                                <option value="inspect">inspect</option>
+                                <option value="prepare">prepare</option>
+                                <option value="develop">develop</option>
+                                <option value="validate">validate</option>
+                                <option value="operate">operate</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="col">
-                        <label for="projectSelect">Project</label>
-                        <select id="projectSelect">
-                            <option value="ai-hub">ai-hub</option>
-                            <option value="site-ahnda">site-ahnda</option>
-                            <option value="bomts-ai">bomts-ai</option>
-                            <option value="lostway">lostway</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-col form-col-sm">
+                            <label for="temperatureInput">Temperature</label>
+                            <input type="number" id="temperatureInput" value="0.2" step="0.1" min="0" max="1">
+                        </div>
+                        <div class="form-col form-col-sm checkbox-col">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="dryRunCheck"> Dry Run
+                            </label>
+                        </div>
                     </div>
-                    <div class="col">
-                        <label for="modeSelect">Mode</label>
-                        <select id="modeSelect">
-                            <option value="inspect">inspect</option>
-                            <option value="prepare">prepare</option>
-                            <option value="develop">develop</option>
-                            <option value="validate">validate</option>
-                            <option value="operate">operate</option>
-                        </select>
+                    <div class="form-group">
+                        <label for="taskInput">Task Instructions</label>
+                        <textarea id="taskInput" rows="6" placeholder="작업 지시 사항을 입력하세요..."></textarea>
+                    </div>
+                    <button id="btnRun" class="btn-primary">▶ Run Job</button>
+                </div>
+
+                <div id="jobResult" class="card result-card hidden">
+                    <div class="result-header">
+                        <h2>실행 결과 <span id="runStatus" class="badge"></span></h2>
+                        <button id="btnCopyResult" class="btn-ghost btn-sm">결과 복사</button>
+                    </div>
+                    <div id="filePaths" class="paths-box hidden">
+                        <strong>생성된 파일:</strong>
+                        <ul id="pathsList"></ul>
+                    </div>
+                    <div class="response-box">
+                        <pre id="responseOutput">결과가 여기에 표시됩니다...</pre>
                     </div>
                 </div>
 
-                <div class="form-group row">
-                    <div class="col">
-                        <label for="temperatureInput">Temperature</label>
-                        <input type="number" id="temperatureInput" value="0.2" step="0.1" min="0" max="1">
-                    </div>
-                    <div class="col checkbox-col">
-                        <label>
-                            <input type="checkbox" id="dryRunCheck"> Dry Run (No Ollama Call)
-                        </label>
-                    </div>
+                <div class="card">
+                    <h2>최근 Job 기록</h2>
+                    <ul id="recentJobsList" class="job-list">
+                        <li>로딩 중...</li>
+                    </ul>
                 </div>
-
-                <div class="form-group">
-                    <label for="taskInput">Task Instructions</label>
-                    <textarea id="taskInput" rows="5" placeholder="Enter task instructions here..."></textarea>
-                </div>
-
-                <button id="btnRun" class="btn-primary">▶ Run Job</button>
             </div>
 
-            <div class="panel results-panel">
-                <h2>Execution Result <span id="runStatus" class="badge hidden"></span> <button id="btnCopyResult" class="btn-small hidden" style="float:right;">결과 복사</button></h2>
+            <!-- ===== Tab: Instruction Review ===== -->
+            <div id="tab-instruction-review" class="tab-content">
+                <div class="page-header">
+                    <h1>Instruction Review</h1>
+                    <p class="page-desc">초안 지침을 3단계 평가하여 Developer Request로 만듭니다</p>
+                </div>
+
+                <div class="pipeline-flow">
+                    <div class="pipeline-step">
+                        <span class="step-num">1</span>
+                        <span class="step-label">구조 정리</span>
+                        <span class="step-model">Flash Lite</span>
+                    </div>
+                    <span class="pipeline-arrow">→</span>
+                    <div class="pipeline-step">
+                        <span class="step-num">2</span>
+                        <span class="step-label">실전 개발 검증</span>
+                        <span class="step-model">Flash</span>
+                    </div>
+                    <span class="pipeline-arrow">→</span>
+                    <div class="pipeline-step">
+                        <span class="step-num">3</span>
+                        <span class="step-label">최종 승인</span>
+                        <span class="step-model">Pro</span>
+                    </div>
+                    <span class="pipeline-arrow">→</span>
+                    <div class="pipeline-step pipeline-step-final">
+                        <span class="step-num">★</span>
+                        <span class="step-label">Developer Request</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="irTitle">Review Title</label>
+                            <input type="text" id="irTitle" placeholder="예: ahnda calendar v1 개발">
+                        </div>
+                        <div class="form-col">
+                            <label for="irTargetProject">대상 프로젝트</label>
+                            <select id="irTargetProject">
+                                <option value="ai-hub">ai-hub</option>
+                                <option value="site-ahnda">site-ahnda</option>
+                                <option value="lostway">lostway</option>
+                                <option value="site-bomts">site-bomts</option>
+                                <option value="legacy-boardgame">legacy-boardgame</option>
+                                <option value="bomTS-Decision">bomTS-Decision</option>
+                                <option value="bomts-ai">bomts-ai</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label for="irRequestType">요청 유형</label>
+                            <select id="irRequestType">
+                                <option value="development">development</option>
+                                <option value="simulation">simulation</option>
+                                <option value="evaluation">evaluation</option>
+                                <option value="documentation">documentation</option>
+                                <option value="refactor">refactor</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="irReviewerMode">평가 모드</label>
+                            <select id="irReviewerMode">
+                                <option value="local-only">local-only (AI 호출 없음)</option>
+                                <option value="google-eval-required-later">google-eval-required-later (Google AI 평가)</option>
+                            </select>
+                        </div>
+                        <div class="form-col form-col-sm">
+                            <label for="irTemperature">Temperature</label>
+                            <input type="number" id="irTemperature" value="0.2" step="0.1" min="0" max="1">
+                        </div>
+                    </div>
+                    <div id="googleApiKeyRow" class="form-group hidden">
+                        <label for="irGoogleApiKey">Google API Key <span class="badge badge-warn">승인 필요 구간</span></label>
+                        <input type="password" id="irGoogleApiKey" placeholder="Google AI API Key (세션에서만 사용, 저장 안 됨)">
+                        <p class="hint">API Key는 이 세션에서만 사용되며 서버에 저장되지 않습니다.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="irDraftInstruction">초안 지침 (Draft Instruction)</label>
+                        <textarea id="irDraftInstruction" rows="12" placeholder="개발/시뮬레이션/평가 지침 초안을 입력하세요..."></textarea>
+                    </div>
+                    <button id="btnRunReview" class="btn-primary btn-accent">◈ 3단계 평가 실행</button>
+                </div>
+
+                <!-- 평가 진행 상태 -->
+                <div id="irProgress" class="card hidden">
+                    <h2>평가 진행 중...</h2>
+                    <div class="stage-progress">
+                        <div class="stage-item" id="stageProgress1">
+                            <span class="stage-dot stage-waiting">○</span>
+                            <span>1차 평가: 구조 정리</span>
+                        </div>
+                        <div class="stage-item" id="stageProgress2">
+                            <span class="stage-dot stage-waiting">○</span>
+                            <span>2차 평가: 실전 개발 검증</span>
+                        </div>
+                        <div class="stage-item" id="stageProgress3">
+                            <span class="stage-dot stage-waiting">○</span>
+                            <span>3차 평가: 최종 승인</span>
+                        </div>
+                        <div class="stage-item" id="stageProgressFinal">
+                            <span class="stage-dot stage-waiting">○</span>
+                            <span>Developer Request 생성</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 평가 결과 -->
+                <div id="irResult" class="hidden">
+                    <div class="card">
+                        <div class="result-header">
+                            <h2>평가 완료 <span id="irStatus" class="badge badge-ok"></span></h2>
+                            <div class="result-actions">
+                                <span id="irGoogleAiLabel" class="badge hidden"></span>
+                                <button id="btnCopyFinalReview" class="btn-ghost btn-sm">최종 결과 복사</button>
+                            </div>
+                        </div>
+                        <div id="irFilePaths" class="paths-box"></div>
+                    </div>
+
+                    <div class="stages-grid">
+                        <div class="card stage-card">
+                            <h3>1차 평가: 구조 정리</h3>
+                            <div class="markdown-body" id="irStage1Content"></div>
+                        </div>
+                        <div class="card stage-card">
+                            <h3>2차 평가: 실전 개발 검증</h3>
+                            <div class="markdown-body" id="irStage2Content"></div>
+                        </div>
+                        <div class="card stage-card">
+                            <h3>3차 평가: 최종 승인 (Developer Request)</h3>
+                            <div class="markdown-body" id="irStage3Content"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Tab: Developer Requests ===== -->
+            <div id="tab-developer-requests" class="tab-content">
+                <div class="page-header">
+                    <h1>Developer Requests</h1>
+                    <p class="page-desc">opai 개발자에게 전달 가능한 최종 지침 목록</p>
+                </div>
+                <div class="card">
+                    <div class="table-header">
+                        <button id="btnRefreshRequests" class="btn-ghost btn-sm">새로고침</button>
+                    </div>
+                    <table class="data-table" id="drTable">
+                        <thead>
+                            <tr>
+                                <th>제목</th>
+                                <th>대상 프로젝트</th>
+                                <th>유형</th>
+                                <th>상태</th>
+                                <th>생성 시각</th>
+                                <th>액션</th>
+                            </tr>
+                        </thead>
+                        <tbody id="drTableBody">
+                            <tr><td colspan="6" class="empty-row">로딩 중...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== Tab: Evaluation Results ===== -->
+            <div id="tab-eval-results" class="tab-content">
+                <div class="page-header">
+                    <h1>Evaluation Results</h1>
+                    <p class="page-desc">최근 Instruction Review 결과 목록</p>
+                </div>
+                <div class="card">
+                    <div class="table-header">
+                        <button id="btnRefreshReviews" class="btn-ghost btn-sm">새로고침</button>
+                    </div>
+                    <table class="data-table" id="irTable">
+                        <thead>
+                            <tr>
+                                <th>제목</th>
+                                <th>대상 프로젝트</th>
+                                <th>유형</th>
+                                <th>Google AI</th>
+                                <th>생성 시각</th>
+                                <th>액션</th>
+                            </tr>
+                        </thead>
+                        <tbody id="irTableBody">
+                            <tr><td colspan="6" class="empty-row">로딩 중...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== Tab: OpenClaw ===== -->
+            <div id="tab-openclaw" class="tab-content">
+                <div class="page-header">
+                    <h1>OpenClaw Console</h1>
+                    <p class="page-desc">OpenClaw Bridge Server와 연결된 로컬 AI Agent</p>
+                </div>
                 
-                <div id="filePaths" class="paths-box hidden">
-                    <strong>Generated Files:</strong>
-                    <ul id="pathsList"></ul>
-                </div>
+                <div style="display: flex; gap: 20px; align-items: stretch;">
+                    <!-- Left: Chat UI -->
+                    <div class="card" style="flex: 2; display: flex; flex-direction: column; height: 650px; margin-bottom: 0;">
+                        <h2 style="margin-bottom: 15px;">OpenClaw Chat</h2>
+                        <div id="openclawChatLog" class="markdown-body" style="flex: 1; overflow-y: auto; background: var(--vscode-editor-background); border: 1px solid var(--vscode-widget-border); border-radius: 6px; padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 15px;">
+                            <div style="color: var(--vscode-descriptionForeground); text-align: center; margin-top: 20px;">로컬 AI(Gemma / Qwen)와 대화를 시작해보세요.</div>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: stretch;">
+                            <textarea id="openclawChatInput" rows="3" placeholder="메시지를 입력하세요 (Enter로 전송, Shift+Enter로 줄바꿈)..." style="flex: 1; resize: none; padding: 12px; border-radius: 6px; border: 1px solid var(--vscode-widget-border); background: var(--vscode-input-background); color: var(--vscode-input-foreground); font-family: inherit; font-size: 14px; outline: none;"></textarea>
+                            <button id="btnOpenClawSend" class="btn-primary" style="width: 100px; flex-shrink: 0; padding: 0; font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 6px;">전송</button>
+                        </div>
+                    </div>
 
-                <div class="response-box">
-                    <pre id="responseOutput">Result will appear here...</pre>
-                </div>
-            </div>
+                    <!-- Right: Status and Info -->
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+                        <div class="card" style="margin-bottom: 0;">
+                            <div class="result-header" style="justify-content: space-between; align-items: center; border-bottom: 1px solid var(--vscode-widget-border); padding-bottom: 10px; margin-bottom: 15px;">
+                                <h2 style="margin: 0; font-size: 1.1em;">OpenClaw Health Status</h2>
+                                <button id="btnRefreshOpenClaw" class="btn-ghost btn-sm">새로고침</button>
+                            </div>
+                            <div id="openclawHealthDisplay" class="response-box" style="background: var(--vscode-editor-background); padding: 15px; border-radius: 6px; font-family: monospace;">
+                                상태 확인 중...
+                            </div>
+                        </div>
 
-            <div class="panel safe-apply-panel">
-                <h2>Safe Apply</h2>
-                <div class="form-group">
-                    <button id="btnPreviewAhnda" class="btn-small">ahnda MVP 미리보기</button>
-                    <button id="btnApplyAhnda" class="btn-primary" style="margin-left: 10px;">ahnda MVP 적용</button>
+                        <div class="card" id="openclawLinkCard" style="margin-bottom: 0;">
+                            <h2>OpenClaw Web UI 접근</h2>
+                            <p>아래 버튼을 클릭하여 OpenClaw 연결 상태 페이지를 새 창에서 엽니다.</p>
+                            <div style="margin-top: 15px;">
+                                <a id="btnOpenClawWeb" href="#" target="_blank" class="btn-primary" style="display:inline-block; text-decoration:none; padding: 10px 20px;">OpenClaw 새 창 열기 ↗</a>
+                            </div>
+                            <div style="margin-top: 15px; font-size: 0.85em; color: var(--vscode-descriptionForeground);">
+                                <strong>Web URL:</strong> <span id="lblOpenClawWebUrl">-</span><br>
+                                <strong>API URL:</strong> <span id="lblOpenClawApiUrl">-</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="safeApplyResults" class="response-box hidden">
-                    <pre id="safeApplyOutput">결과가 여기에 표시됩니다...</pre>
-                </div>
-            </div>
-
-            <div class="panel history-panel">
-                <h2>Recent Jobs</h2>
-                <ul id="recentJobsList">
-                    <li>Loading...</li>
-                </ul>
             </div>
         </main>
     </div>
 
-    <!-- Modal for Markdown View -->
+    <!-- Modal -->
     <div id="jobModal" class="modal hidden">
         <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2 id="modalTitle">Job Result</h2>
-                <button id="btnCopyModal" class="btn-small">Markdown 복사</button>
+            <div class="modal-header">
+                <h2 id="modalTitle">결과 보기</h2>
+                <div class="modal-actions">
+                    <button id="btnCopyModal" class="btn-ghost btn-sm">Markdown 복사</button>
+                    <span class="close-modal" id="closeModal">✕</span>
+                </div>
             </div>
             <div id="modalBody" class="markdown-body"></div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="/static/app.js?v=20260503"></script>
+    <script src="/static/app.js?v=20260505"></script>
 </body>
-
 </html>

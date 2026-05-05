@@ -4,8 +4,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 import os
 import glob
+import re
 
 from . import ollama_client
 from . import prompt_loader
@@ -13,6 +15,8 @@ from . import job_context
 from . import output_writer
 from . import history_writer
 from . import safe_apply
+from . import instruction_review as ir_module
+from . import developer_request_writer as dr_writer
 
 app = FastAPI(title="Local AI Web Console")
 app.include_router(safe_apply.router, prefix="/api")
@@ -29,6 +33,16 @@ class JobRequest(BaseModel):
     task: str
     temperature: float = 0.2
     dry_run: bool = False
+
+
+class InstructionReviewRequest(BaseModel):
+    title: str
+    target_project: str
+    request_type: str
+    draft_instruction: str
+    reviewer_mode: str = "local-only"  # local-only | google-eval-required-later
+    temperature: float = 0.2
+    google_api_key: Optional[str] = None
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
@@ -131,3 +145,126 @@ async def get_job_result(job_id: str):
         
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
+
+
+# ─── Instruction Review Pipeline ───────────────────────────────────────────
+
+IR_OUT_BASE = "/project/ai-hub/out/instruction-review"
+
+@app.post("/api/instruction-reviews")
+async def create_instruction_review(req: InstructionReviewRequest):
+    try:
+        metadata = ir_module.run_review(
+            title=req.title,
+            target_project=req.target_project,
+            request_type=req.request_type,
+            draft_instruction=req.draft_instruction,
+            reviewer_mode=req.reviewer_mode,
+            temperature=req.temperature,
+            google_api_key=req.google_api_key,
+        )
+        review_id = metadata["review_id"]
+
+        # Stage 3 결과 읽기
+        v4_path = metadata["files"]["v4_stage3"]
+        stage3_content = ""
+        if os.path.isfile(v4_path):
+            with open(v4_path, "r", encoding="utf-8") as f:
+                stage3_content = f.read()
+
+        # Developer Request 생성
+        dr_result = dr_writer.write_developer_request(
+            review_id=review_id,
+            title=req.title,
+            target_project=req.target_project,
+            request_type=req.request_type,
+            stage3_result=stage3_content,
+            reviewer_mode=req.reviewer_mode,
+        )
+
+        return {
+            "review_id": review_id,
+            "status": "completed",
+            "stage1_file": metadata["files"]["v2_stage1"],
+            "stage2_file": metadata["files"]["v3_stage2"],
+            "stage3_file": metadata["files"]["v4_stage3"],
+            "developer_request_file": dr_result["doc_path"],
+            "metadata_file": metadata["files"]["metadata"],
+            "google_ai_used": metadata["google_ai_used"],
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.get("/api/instruction-reviews")
+async def list_instruction_reviews():
+    if not os.path.exists(IR_OUT_BASE):
+        return {"reviews": []}
+    reviews = []
+    for d in sorted(os.listdir(IR_OUT_BASE), reverse=True)[:20]:
+        meta_path = os.path.join(IR_OUT_BASE, d, "review_metadata.json")
+        if os.path.isfile(meta_path):
+            try:
+                import json
+                with open(meta_path, "r", encoding="utf-8") as f:
+                    meta = json.load(f)
+                reviews.append({
+                    "review_id": meta.get("review_id"),
+                    "title": meta.get("title"),
+                    "target_project": meta.get("target_project"),
+                    "request_type": meta.get("request_type"),
+                    "timestamp": meta.get("timestamp"),
+                    "status": meta.get("status"),
+                    "google_ai_used": meta.get("google_ai_used"),
+                })
+            except Exception:
+                continue
+    return {"reviews": reviews}
+
+
+@app.get("/api/instruction-reviews/{review_id}")
+async def get_instruction_review(review_id: str):
+    if not re.match(r"^[a-zA-Z0-9_\-]+$", review_id):
+        raise HTTPException(status_code=400, detail="Invalid review_id")
+    meta_path = os.path.join(IR_OUT_BASE, review_id, "review_metadata.json")
+    real_path = os.path.realpath(meta_path)
+    real_base = os.path.realpath(IR_OUT_BASE)
+    if not real_path.startswith(real_base):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    if not os.path.isfile(meta_path):
+        raise HTTPException(status_code=404, detail="Review not found")
+    import json
+    with open(meta_path, "r", encoding="utf-8") as f:
+        meta = json.load(f)
+    # 각 Stage 결과 텍스트도 포함
+    for key, fpath in meta.get("files", {}).items():
+        if isinstance(fpath, str) and fpath.endswith(".md") and os.path.isfile(fpath):
+            with open(fpath, "r", encoding="utf-8") as f:
+                meta[f"{key}_content"] = f.read()
+    return meta
+
+
+# ─── Developer Requests ────────────────────────────────────────────────────
+
+@app.get("/api/developer-requests")
+async def list_developer_requests():
+    items = dr_writer.list_developer_requests(limit=20)
+    return {"requests": items}
+
+
+@app.get("/api/developer-requests/{request_id}")
+async def get_developer_request(request_id: str):
+    item = dr_writer.get_developer_request(request_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Developer request not found")
+    return item
+
+# ─── OpenClaw Configuration ────────────────────────────────────────────────
+
+@app.get("/api/openclaw/config")
+async def get_openclaw_config():
+    return {
+        "web_url": os.getenv("OPENCLAW_WEB_URL", "http://127.0.0.1:11006"),
+        "api_url": os.getenv("OPENCLAW_API_URL", "http://127.0.0.1:11006")
+    }
+
