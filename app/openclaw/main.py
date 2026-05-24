@@ -260,7 +260,8 @@ async def instruction_run_endpoint(req: InstructionRunRequest):
         )
 
     # 2. Classify intent
-    combined_message = req.message or "이 지침을 분석하고 다음 작업을 판단해줘."
+    combined_message = req.message or "이 지침서 스펙에 기재된 목표와 요구사항을 100% 온전히 수용하여, 관련 대상 소스코드를 생략 없이 완전하게 직접 수정하고 Proposed Files 소스코드를 개발해줘."
+
     routing = await intent_router.classify_intent(combined_message, req.mode)
     model = routing["model"]
     route = routing["route"]

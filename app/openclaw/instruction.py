@@ -393,14 +393,23 @@ def build_system_prompt(
 
     # ── Instruction File Analysis ─────────────────────────────────────────────
     if instruction_content:
-        parts.append("## Instruction File [CRITICAL / ABSOLUTE RULE]")
-        parts.append("아래에 로드된 기획 지침 파일(Instruction / Specification File)은 귀하가 이번 개발 작업에서 따라야 할 **최상위 절대 지침(Absolute Directive)**입니다.")
-        parts.append("귀하의 기존 구현 방식이나 관성적인 아키텍처 설계를 고집하지 말고, **반드시 이 지침 파일에 기재된 기획 목표, 레이아웃 가이드, 기능 스펙 및 파일 생성/수정 요구사항을 100% 한 치의 오차도 없이 최우선 1순위로 엄수하여 개발을 진행하십시오.**")
-        parts.append("이 절대 지침 문서의 개발 스펙을 자의적으로 누락하거나 변경하여 구현하는 행위는 엄격히 금지됩니다. 이 스펙 문서는 귀하의 소스코드 작성을 구제하는 절대 복종 명령서입니다.")
+        parts.append("## Instruction File [CRITICAL / ABSOLUTE RULE - NO JUDGMENT]")
+        parts.append("아래에 로드된 기획 지침 파일(Instruction / Specification File)은 귀하가 이번 작업에서 한 치의 오차도 없이 100% 똑같이 구현해 내야 하는 **절대적인 개발 명세서(Absolute Development Specification)**입니다.")
+        parts.append("귀하는 이 기획안에 대해 어떠한 주관적인 '다음 작업 판단', '타당성 분석', '요약 보고 및 계획 수립' 등의 중간 행위를 절대 개입시켜서는 안 되며, 오로지 이 명세서에 지시된 UI 정보(이력서 정보 등), 레이아웃 가이드 및 파일 생성/수정 요구사항 그대로 **실제 가용하고 완성된 소스코드를 Proposed Files 코드 블록에 단 한 줄의 중략 생략도 없이 즉시 100% 완벽하게 작성해야만 합니다.**")
+        parts.append("기획서가 주어졌음에도 코드를 작성하지 않고 '분석만 하고 멈추는 행위'나 '말로 때우며 파일 수정 출력을 누락하는 행위'는 귀하의 시스템 기동 실패 및 항명으로 간주됩니다. 귀하는 오로지 명세서의 명령 그대로 index.html 등의 관련 대상 파일을 즉각적이고 물리적으로 완성하는 완전 자동화 기계(Execution Engine)로서 충실히 동작해야 합니다.")
         parts.append("```markdown")
         parts.append(instruction_content)
         parts.append("```")
+        
+        if has_develop:
+            parts.append("")
+            parts.append("### [CRITICAL FORMAT RESOLUTION DIRECTIVE]")
+            parts.append("IMPORTANT: 기획 지침 파일의 끝부분에 '작업이 끝난 뒤에는 아래 형식으로만 답한다' 또는 '~라고만 말하고 멈춰라' 등의 엄격한 응답 템플릿 제약이 기재되어 있을 수 있습니다.")
+            parts.append("그러나 귀하는 현재 **develop(개발/수정)** 모드로 동작하고 있으므로, 파일에 실제 수정 사항을 물리적으로 반영하고 에디터에 자동 덮어쓰기 위해 **반드시 완전한 소스 코드가 포함된 `### FILE: <file_absolute_path>` 형식의 마크다운 코드 블록(Proposed Files)을 본문 내에 절대로 한 줄의 생략도 없이 완성도 높게 먼저 출력해야만 합니다!**")
+            parts.append("기획서의 템플릿 제약은 코드 블록 출력이 끝난 **맨 마지막 부분에 부록(Appendix) 형태로 반드시 기재**하십시오. 본문 내 소스 코드 블록을 절대 누락하거나 요약하지 마십시오. 코드를 생략하여 요약문만 출력하면 자동 에디터 쓰기 엔진이 동작하지 않아 치명적인 실패가 유발됩니다.")
         parts.append("")
+
+
 
     # ── Selection ─────────────────────────────────────────────────────────────
     if selection:

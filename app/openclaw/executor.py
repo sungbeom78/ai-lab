@@ -50,7 +50,7 @@ def parse_proposed_files(text: str) -> list[dict]:
             # Support comments starting with # or //
             m = re.search(r"###\s*FILE:\s*([^\s\n]+)", line)
             if m:
-                file_path = m.group(1).strip()
+                file_path = m.group(1).strip().replace("-->", "").strip()
                 content_start_idx = i + 1
                 break
                 

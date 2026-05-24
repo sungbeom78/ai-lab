@@ -1,0 +1,18 @@
+# Review Summary
+
+- **Review ID**: ir_20260525_082839_site-ahnda
+- **제목**: VSCode Extension Request
+- **대상 프로젝트**: site-ahnda
+- **요청 유형**: VSCode Direct
+- **평가 모드**: local-only
+- **Google AI 사용**: False
+- **완료 시각**: 2026-05-25 08:28:39
+
+## Stage 결과 파일
+
+| Stage | 파일 |
+|-------|------|
+| 원본 초안 | `v1_original.md` |
+| Stage 1 구조 정리 | `v2_stage1_structure_review.md` |
+| Stage 2 실전 검증 | `v3_stage2_practical_review.md` |
+| Stage 3 최종 승인 | `v4_stage3_final_approval.md` |

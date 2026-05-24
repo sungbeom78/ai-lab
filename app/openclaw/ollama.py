@@ -54,6 +54,8 @@ async def chat(
                 "keep_alive": keep_alive,
                 "options": {
                     "temperature": temperature,
+                    "num_ctx": 16384,     # 16K context window to support large source files and instructions
+                    "num_predict": 4096,  # 4K output generation limit to guarantee full file printing without cuts
                 },
             }
             resp = await client.post(

@@ -46,3 +46,52 @@ INFO:     Started server process [141895]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     172.17.96.1:64770 - "POST /api/instruction/run HTTP/1.1" 200 OK
+INFO:     172.17.96.1:62495 - "POST /api/instruction/run HTTP/1.1" 200 OK
+INFO:     172.17.96.1:62500 - "POST /api/instruction/run HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'app/openclaw/instruction.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [141895]
+INFO:     Started server process [154903]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app/openclaw/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [154903]
+INFO:     Started server process [156085]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app/openclaw/instruction.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [156085]
+INFO:     Started server process [157182]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     172.17.96.1:62501 - "POST /api/instruction/run HTTP/1.1" 200 OK
+INFO:     172.17.96.1:62504 - "POST /api/instruction/run HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'app/openclaw/ollama.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [157182]
+INFO:     Started server process [161247]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     172.17.96.1:63561 - "POST /api/instruction/run HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'app/openclaw/executor.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [161247]
+INFO:     Started server process [171305]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     172.17.96.1:63563 - "POST /api/instruction/run HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63566 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63568 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     172.17.96.1:63569 - "POST /api/chat HTTP/1.1" 200 OK
