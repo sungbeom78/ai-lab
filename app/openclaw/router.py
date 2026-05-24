@@ -8,13 +8,19 @@ async def classify_intent(message: str, mode: str = "auto") -> dict:
 
     Args:
         message: User's message text.
-        mode: "auto", "chat", or "code". If not auto, forces the mode.
+        mode: "auto", "chat", or "code". Can be comma-separated multiple modes.
 
     Returns:
         dict with 'route' ("chat" or "code") and 'model' name.
     """
-    if mode == "code":
-        return {"route": "code", "model": CODE_MODEL, "reason": "mode=code (forced)"}
+    # 쉼표로 구분된 다중 모드 리스트 분석
+    modes = [m.strip().lower() for m in mode.split(',')] if mode else []
+
+    # [CRITICAL HOTFIX] 다중 모드 중 develop(개발) 또는 validate(검증)이 단 하나라도 포함되어 있다면,
+    # 사용자의 명시적인 코드 수정 목적이 확인된 것이므로, 챗 분류기를 태우지 않고
+    # 무조건 고성능 코딩 모델인 CODE_MODEL (qwen)로 직행 라우팅한다!
+    if "develop" in modes or "validate" in modes or mode == "code":
+        return {"route": "code", "model": CODE_MODEL, "reason": f"develop/validate/code mode active (forced code model: {CODE_MODEL})"}
 
     if mode == "chat":
         return {"route": "chat", "model": CHAT_MODEL, "reason": "mode=chat (forced)"}

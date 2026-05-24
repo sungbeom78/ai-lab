@@ -197,6 +197,25 @@ _MODE_DESCRIPTIONS = {
     "operate": "운영/배포 모드: 실행, 배포, 모니터링, 롤백 기준을 중심으로 응답합니다.",
 }
 
+_MODE_DIRECTIVES = {
+    "inspect": """[INSPECT MODE DIRECTIVE]
+- 대상 소스 코드, 프로젝트 구조, 요구사항 및 로그를 철저히 파악하고 면밀히 조사하십시오.
+- 단순 코드 훑어보기에 그치지 않고, 의존 관계와 아키텍처 결합도 측면에서 구조적 통찰을 도출하십시오.""",
+    "prepare": """[PREPARE MODE DIRECTIVE]
+- 변경을 시작하기 전, 구체적인 구현 계획(Implementation Plan), 상세 To-Do 단계 및 예상 산출물 목록을 정의하십시오.
+- 잠재적인 부작용 범위와 사전 준비 작업들을 명확히 나열하십시오.""",
+    "develop": """[DEVELOP MODE DIRECTIVE - CRITICAL RULE]
+- 당신은 현재 'develop(개발/수정)' 모드로 동작 중입니다.
+- **[요약 금지 법칙] 절대로 변경 사항이나 해결책을 대략적인 개념 설명이나 말로 요약만 하고 응답을 끝마치지 마십시오.**
+- **반드시 '## Proposed Files' 또는 이에 준하는 수정 대상 코드 섹션에 카피하여 즉시 파일에 반영할 수 있는 완전하고 완성도 높은 소스 코드(또는 완벽한 패치형 diff)를 한 줄도 생략 없이 구체적으로 작성해야 합니다.**
+- 코드 중간을 주석(`// ... 기존 로직 ...` 등)으로 날려버리거나 채워 넣기를 미루는 중략 행위를 극도로 금지합니다. 동작 가능한 완전한 형태로 구현하십시오.""",
+    "validate": """[VALIDATE MODE DIRECTIVE]
+- 구현 사항을 완벽하게 검증하기 위한 테스트 계획, 유닛 테스트 스크립트 작성 예시, 그리고 터미널에서 실행할 정확한 빌드/테스트 명령 목록을 제공하십시오.
+- 발생 가능한 엣지 케이스들을 점검하는 명확한 검증 체크리스트를 제안하십시오.""",
+    "operate": """[OPERATE MODE DIRECTIVE]
+- 서비스의 안전한 배포 및 기동 가이드, 환경 설정 튜닝, 모니터링 기법, 그리고 장애 대응 롤백(Rollback) 시나리오를 설계하십시오."""
+}
+
 _TOOL_DESCRIPTIONS = {
     "read":    ("워크스페이스 내 파일 읽기 및 탐색", "activeFile, instructionPath, 관련 문서 읽기 가능"),
     "search":  ("워크스페이스 내 파일 검색", "관련 파일/로그 찾기 가능"),
@@ -248,10 +267,28 @@ def build_system_prompt(
     parts.append("")
 
     # ── Mode ─────────────────────────────────────────────────────────────────
-    mode_desc = _MODE_DESCRIPTIONS.get(mode, f"모드: {mode}")
-    parts.append("## Current Mode")
-    parts.append(f"**{mode}** — {mode_desc}")
-    parts.append("")
+    modes = [m.strip().lower() for m in mode.split(',')] if mode else ["develop"]
+    has_develop = "develop" in modes
+    
+    parts.append("## Current Mode & Action Directives")
+    for m in modes:
+        desc = _MODE_DESCRIPTIONS.get(m, f"모드: {m}")
+        parts.append(f"### Mode: **{m}**")
+        parts.append(f"- {desc}")
+        
+        # [CRITICAL MERGE RULE] 만약 다중 모드 중 develop(개발)이 단 하나라도 포함되어 있다면,
+        # inspect나 prepare의 '계획 및 요약만 해라'는 제약은 자동으로 해제되며,
+        # 무조건 Proposed Files 코드 작성을 완료해야 하는 develop 지침이 최상위 우선권(Override)을 가집니다.
+        if m in ("inspect", "prepare") and has_develop:
+            parts.append("*(주의: 현재 Develop(개발) 모드가 함께 켜져 있으므로, 요약/스캔 보고서 작성에 그치지 말고 본문의 코딩 규격에 맞추어 실제 Proposed Files 소스코드 완성을 무조건 1순위로 진행하십시오.)*")
+            if m == "inspect":
+                parts.append("[INSPECT DIRECTIVE - DEVELOP OVERRIDE]\n- 대상 파일 구조를 속성으로 스캔하되, 바로Proposed Files에 온전한 코드를 작성해 넣으십시오.")
+            elif m == "prepare":
+                parts.append("[PREPARE DIRECTIVE - DEVELOP OVERRIDE]\n- 문서 계획만 작성하지 마시고, 실제 카피 가능한 완성본 코드를 패치 블록에 반드시 포함하십시오.")
+        else:
+            if m in _MODE_DIRECTIVES:
+                parts.append(_MODE_DIRECTIVES[m])
+        parts.append("")
 
     # ── Configure Tools ───────────────────────────────────────────────────────
     enabled_tools = tools or []
@@ -263,6 +300,38 @@ def build_system_prompt(
         for t in enabled_tools:
             short, detail = _TOOL_DESCRIPTIONS.get(t, (t, ""))
             parts.append(f"- **{t}** ✅: {short} ({detail})")
+            
+        # [MANDATORY] 자동 실행 포맷 가이드 주입
+        parts.append("")
+        parts.append("### [TOOL AUTO-EXECUTION FORMAT RULES]")
+        parts.append("사용자가 귀하에게 'edit' 또는 'execute' 권한을 활성화하여 질의했습니다. 귀하의 코드 블록 응답은 백엔드 실행 파서에 의해 **실제 로컬 파일에 즉시 쓰이거나 터미널에 자동 실행**됩니다.")
+        parts.append("이 실시간 자동 반영 작업을 위해 반드시 아래의 양식을 엄격하고 완벽하게 지켜 코드를 작성하십시오:")
+        
+        if "edit" in enabled_tools:
+            parts.append("1. **파일 생성/수정 (edit 권한 활성화 상태)**:")
+            parts.append("   - 수정하거나 생성할 파일 내용을 마크다운 코드 블록 안에 넣으십시오.")
+            parts.append("   - **반드시 코드 블록의 첫 번째 라인에 언어 문법에 맞는 주석 기호를 적고 `### FILE: <file_absolute_path>` 형식의 파일 주석을 한 줄 명시하십시오. (중요)**")
+            parts.append("   - 코드 내부에 '// ... 기존 코드 ...' 식의 로직 생략 주석을 적는 일을 엄격히 금지합니다. 소스 코드를 온전하게 완성하십시오.")
+            parts.append("   - 예시 (JavaScript):")
+            parts.append("     ```javascript")
+            parts.append("     // ### FILE: /project/site/ahnda/assets/js/app.js")
+            parts.append("     console.log('App loaded successfully.');")
+            parts.append("     ```")
+            parts.append("   - 예시 (Python):")
+            parts.append("     ```python")
+            parts.append("     # ### FILE: /project/ai-hub/app/openclaw/test.py")
+            parts.append("     print('Test file successfully created.')")
+            parts.append("     ```")
+            
+        if "execute" in enabled_tools:
+            parts.append("2. **명령어 실행 (execute 권한 활성화 상태)**:")
+            parts.append("   - 실행할 터미널 명령어는 bash/sh 코드 블록 안에 넣으십시오.")
+            parts.append("   - **반드시 첫 번째 라인에 `### CMD:`를 주석으로 명시하십시오.**")
+            parts.append("   - 예시:")
+            parts.append("     ```bash")
+            parts.append("     # ### CMD:")
+            parts.append("     npm run compile")
+            parts.append("     ```")
     if disabled_tools:
         parts.append("다음 도구는 **비활성화** 되어 있습니다. 해당 도구를 통한 작업을 수행했다고 말하지 마십시오.")
         for t in disabled_tools:
@@ -293,8 +362,12 @@ def build_system_prompt(
     parts.append("- **판단**: 현재 상태 평가")
     parts.append("- **다음 작업**: 우선순위 순서로")
     parts.append("- **주의사항**: 금지/보류/위험 항목")
-    if mode in ("develop", "validate"):
-        parts.append("- **수정 대상 파일**: 정확한 경로")
+    
+    has_develop = "develop" in modes
+    has_validate = "validate" in modes
+    
+    if has_develop or has_validate:
+        parts.append("- **Proposed Files (수정 대상 파일)**: 정확한 파일 경로와 카피 가능한 전체 완성 소스 코드 (develop 모드일 때 특히 필수, 중략 불가)")
         parts.append("- **검증 명령**: 실제 실행 가능한 명령")
     parts.append("")
 
@@ -320,10 +393,10 @@ def build_system_prompt(
 
     # ── Instruction File Analysis ─────────────────────────────────────────────
     if instruction_content:
-        parts.append("## Instruction File Analysis")
-        parts.append("아래 지침 파일을 실제로 읽었습니다. 다음 구조로 핵심 요구사항을 추출하여 응답을 구성하십시오:")
-        parts.append("(작업 목표 / 대상 프로젝트 / 작업 범위 / 현재 완료된 것 / 다음 작업 / 수정 대상 파일 / 신규 생성 파일 / 금지·보류 / 검증 기준)")
-        parts.append("일반론으로 대체하지 말고 지침 파일의 실제 내용을 기반으로 구체적으로 답변하십시오.")
+        parts.append("## Instruction File [CRITICAL / ABSOLUTE RULE]")
+        parts.append("아래에 로드된 기획 지침 파일(Instruction / Specification File)은 귀하가 이번 개발 작업에서 따라야 할 **최상위 절대 지침(Absolute Directive)**입니다.")
+        parts.append("귀하의 기존 구현 방식이나 관성적인 아키텍처 설계를 고집하지 말고, **반드시 이 지침 파일에 기재된 기획 목표, 레이아웃 가이드, 기능 스펙 및 파일 생성/수정 요구사항을 100% 한 치의 오차도 없이 최우선 1순위로 엄수하여 개발을 진행하십시오.**")
+        parts.append("이 절대 지침 문서의 개발 스펙을 자의적으로 누락하거나 변경하여 구현하는 행위는 엄격히 금지됩니다. 이 스펙 문서는 귀하의 소스코드 작성을 구제하는 절대 복종 명령서입니다.")
         parts.append("```markdown")
         parts.append(instruction_content)
         parts.append("```")

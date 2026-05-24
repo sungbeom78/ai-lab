@@ -1,0 +1,48 @@
+nohup: ignoring input
+Starting OpenClaw Bridge Server...
+  Host: 0.0.0.0
+  Port: 11005
+  Ollama: http://127.0.0.1:11434
+
+INFO:     Will watch for changes in these directories: ['/mnt/d/project/ai-hub']
+INFO:     Uvicorn running on http://0.0.0.0:11005 (Press CTRL+C to quit)
+INFO:     Started reloader process [97222] using StatReload
+INFO:     Started server process [97249]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     172.17.96.1:49979 - "POST /api/chat HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'app/openclaw/instruction.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [97249]
+INFO:     Started server process [100879]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app/openclaw/instruction.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [100879]
+INFO:     Started server process [101469]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     172.17.96.1:64734 - "POST /api/instruction/run HTTP/1.1" 400 Bad Request
+WARNING:  StatReload detected changes in 'app/openclaw/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [101469]
+INFO:     Started server process [137580]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     172.17.96.1:64742 - "POST /api/instruction/run HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'app/openclaw/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [137580]
+INFO:     Started server process [141895]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     172.17.96.1:64770 - "POST /api/instruction/run HTTP/1.1" 200 OK

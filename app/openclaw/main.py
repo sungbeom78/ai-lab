@@ -51,6 +51,7 @@ class ChatRequest(BaseModel):
     temperature: float = 0.2
     usePipeline: bool = False
     tools: list[str] = []
+    instructionContent: str = ""
 
 
 class InstructionRunRequest(BaseModel):
@@ -58,6 +59,8 @@ class InstructionRunRequest(BaseModel):
     instructionPath: str
     message: str = ""
     mode: str = "auto"
+    instructionContent: str = ""
+    tools: list[str] = []
 
 
 # ─── Web & Health Check ────────────────────────────────────────────────────
@@ -195,6 +198,14 @@ async def chat_endpoint(req: ChatRequest):
             detail=f"Ollama error: {result.get('error', 'Unknown error')}",
         )
 
+    # 3.5 Auto Execution Engine 연동
+    from . import executor
+    final_answer = executor.apply_proposed_tools(
+        answer=result["content"],
+        enabled_tools=req.tools,
+        workspace_root=req.workspaceRoot
+    )
+
     # 4. Generate session ID and save log
     session_id = session_logger.generate_session_id()
     log_path = session_logger.save_session_log(
@@ -207,7 +218,7 @@ async def chat_endpoint(req: ChatRequest):
         route=route,
         model=model,
         routing_reason=routing["reason"],
-        answer=result["content"],
+        answer=final_answer,
         mode=req.mode,
         target_project=req.project,
         temperature=req.temperature,
@@ -218,7 +229,7 @@ async def chat_endpoint(req: ChatRequest):
         "ok": True,
         "model": model,
         "route": route,
-        "answer": result["content"],
+        "answer": final_answer,
         "sessionId": session_id,
         "logPath": log_path,
         "routingReason": routing["reason"],
@@ -232,7 +243,16 @@ async def chat_endpoint(req: ChatRequest):
 async def instruction_run_endpoint(req: InstructionRunRequest):
     """Instruction-based task endpoint. Reads instruction file and generates plan."""
     # 1. Read instruction file
-    instr_data = instruction.read_instruction_file(req.instructionPath)
+    instr_data = {"ok": False, "content": "", "filename": ""}
+    if req.instructionContent:
+        instr_data = {
+            "ok": True,
+            "content": req.instructionContent,
+            "filename": os.path.basename(req.instructionPath) if req.instructionPath else "instruction.md",
+        }
+    else:
+        instr_data = instruction.read_instruction_file(req.instructionPath)
+
     if not instr_data["ok"]:
         raise HTTPException(
             status_code=400,
@@ -249,6 +269,8 @@ async def instruction_run_endpoint(req: InstructionRunRequest):
     system_prompt = instruction.build_system_prompt(
         workspace_root=req.workspaceRoot,
         instruction_content=instr_data["content"],
+        tools=req.tools,
+        mode=req.mode,
     )
 
     user_prompt = combined_message
@@ -269,6 +291,14 @@ async def instruction_run_endpoint(req: InstructionRunRequest):
             detail=f"Ollama error: {result.get('error', 'Unknown error')}",
         )
 
+    # 4.5 Auto Execution Engine 연동
+    from . import executor
+    final_answer = executor.apply_proposed_tools(
+        answer=result["content"],
+        enabled_tools=["edit", "execute"], # 기본 인스트럭션 모드는 파일 패치 및 쉘 명령 구동 허용
+        workspace_root=req.workspaceRoot
+    )
+
     # 5. Save session log
     session_id = session_logger.generate_session_id()
     log_path = session_logger.save_session_log(
@@ -281,7 +311,7 @@ async def instruction_run_endpoint(req: InstructionRunRequest):
         route=route,
         model=model,
         routing_reason=routing["reason"],
-        answer=result["content"],
+        answer=final_answer,
         mode=req.mode,
     )
 
@@ -289,7 +319,7 @@ async def instruction_run_endpoint(req: InstructionRunRequest):
         "ok": True,
         "model": model,
         "route": route,
-        "answer": result["content"],
+        "answer": final_answer,
         "sessionId": session_id,
         "logPath": log_path,
         "routingReason": routing["reason"],
