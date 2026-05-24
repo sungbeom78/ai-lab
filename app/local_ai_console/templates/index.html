@@ -39,6 +39,9 @@
                 <li class="nav-item" data-tab="tab-openclaw" id="nav-openclaw">
                     <span class="nav-icon">🤖</span> OpenClaw Chat
                 </li>
+                <li class="nav-item" data-tab="tab-lostway-sim" id="nav-lostway-sim">
+                    <span class="nav-icon">📖</span> Lostway Sim/Eval
+                </li>
             </ul>
             <div class="sidebar-footer">
                 <button id="btnHealth" class="btn-ghost btn-sm">상태 확인</button>
@@ -365,6 +368,57 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- ===== Tab: Lostway Simulation & Evaluation ===== -->
+            <div id="tab-lostway-sim" class="tab-content">
+                <div class="page-header">
+                    <h1>Lostway Simulation & Eval</h1>
+                    <p class="page-desc">Lostway 상담 테스트 데이터(Synthetic) 생성 및 품질 검증</p>
+                </div>
+
+                <div class="card">
+                    <h2>테스트 데이터 생성</h2>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="lwSimCount">생성 건수 (n 개)</label>
+                            <input type="number" id="lwSimCount" value="20" min="1" max="1000">
+                        </div>
+                    </div>
+                    <button id="btnLwSimGenerate" class="btn-primary" style="background: linear-gradient(135deg, #7c5cfc, #a78bfa);">▶ 데이터 생성 실행</button>
+                    <div id="lwSimGenResult" class="hidden" style="margin-top:10px; font-size:14px; white-space:pre-wrap; background:var(--bg-card); padding:10px; border-radius:4px; border:1px solid var(--border);"></div>
+                </div>
+
+                <div class="card">
+                    <h2>품질 평가 검증</h2>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="lwSimPercent">검증 비율 (n %)</label>
+                            <input type="number" id="lwSimPercent" value="1" min="1" max="100">
+                        </div>
+                    </div>
+                    <button id="btnLwSimEvaluate" class="btn-primary" style="background: linear-gradient(135deg, #10b981, #34d399);">✔ n% 검증 추출 실행</button>
+                    <div id="lwSimEvalResult" class="hidden" style="margin-top:10px; font-size:14px; white-space:pre-wrap; background:var(--bg-card); padding:10px; border-radius:4px; border:1px solid var(--border);"></div>
+                </div>
+
+                <div class="card">
+                    <div class="result-header">
+                        <h2>생성/검증 결과 파일</h2>
+                        <button id="btnRefreshLwSimFiles" class="btn-ghost btn-sm">새로고침</button>
+                    </div>
+                    <table class="data-table" id="lwSimFilesTable">
+                        <thead>
+                            <tr>
+                                <th>파일명</th>
+                                <th>크기 (Bytes)</th>
+                                <th>액션</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lwSimFilesTableBody">
+                            <tr><td colspan="3" class="empty-row">로딩 중...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </main>

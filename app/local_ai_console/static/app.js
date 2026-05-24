@@ -610,3 +610,225 @@ async function applyAhndaMvp() {
         alert(JSON.stringify(data, null, 2));
     } catch (e) { alert(`Error: ${e.message}`); }
 }
+
+// ─── Lostway Sim/Eval Tab ───────────────────────────────────────────────────
+
+function lwSimInit() {
+    lwSimLoadFiles();
+}
+
+async function lwSimGenerate() {
+    const count = parseInt(document.getElementById('lwSimCount').value || '20', 10);
+    const btn = document.getElementById('btnLwSimGenerate');
+    const resultEl = document.getElementById('lwSimGenResult');
+    
+    btn.disabled = true;
+    btn.textContent = '생성 중...';
+    resultEl.classList.remove('hidden');
+    resultEl.textContent = '생성 중입니다. 잠시만 기다려주세요...';
+
+    try {
+        const res = await fetch('/api/lostway/simulation/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ count })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            resultEl.textContent = `✅ 생성 완료!\n\n${data.output}`;
+            lwSimLoadFiles();
+        } else {
+            resultEl.textContent = `❌ 오류 발생:\n${data.error}`;
+        }
+    } catch (e) {
+        resultEl.textContent = `❌ 네트워크 오류: ${e.message}`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '▶ 데이터 생성 실행';
+    }
+}
+
+async function lwSimEvaluate() {
+    const percent = parseInt(document.getElementById('lwSimPercent').value || '1', 10);
+    const btn = document.getElementById('btnLwSimEvaluate');
+    const resultEl = document.getElementById('lwSimEvalResult');
+    
+    btn.disabled = true;
+    btn.textContent = '검증 중...';
+    resultEl.classList.remove('hidden');
+    resultEl.textContent = '검증 스크립트 실행 중입니다. 잠시만 기다려주세요...';
+
+    try {
+        const res = await fetch('/api/lostway/simulation/evaluate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ percent })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            resultEl.textContent = `✅ 검증 완료!\n\n${data.output}`;
+            lwSimLoadFiles();
+        } else {
+            resultEl.textContent = `❌ 오류 발생:\n${data.error}`;
+        }
+    } catch (e) {
+        resultEl.textContent = `❌ 네트워크 오류: ${e.message}`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '✔ n% 검증 추출 실행';
+    }
+}
+
+async function lwSimLoadFiles() {
+    const tbody = document.getElementById('lwSimFilesTableBody');
+    if (!tbody) return;
+    try {
+        const res = await fetch('/api/lostway/simulation/files');
+        const data = await res.json();
+        if (!data.files || data.files.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="empty-row">파일이 없습니다.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.files.map(item => `
+            <tr>
+                <td style="font-family: monospace; font-size: 0.85em;">${item.name}</td>
+                <td>${item.size.toLocaleString()}</td>
+                <td>
+                    <button class="btn-ghost btn-sm" onclick="lwSimViewFile('${item.name}')">열기 (Top 100줄)</button>
+                    <a href="/api/lostway/simulation/files/${encodeURIComponent(item.name)}/download" download class="btn-ghost btn-sm" style="text-decoration:none; padding: 4px 8px; font-size: 11px;">다운로드</a>
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="3" class="empty-row">로드 실패: ${e.message}</td></tr>`;
+    }
+}
+
+async function lwSimViewFile(filename) {
+    try {
+        const res = await fetch(`/api/lostway/simulation/files/${encodeURIComponent(filename)}`);
+        if (!res.ok) {
+            const err = await res.text();
+            alert(`파일 읽기 실패: ${err}`);
+            return;
+        }
+        const text = await res.text();
+        const modal = document.getElementById('jobModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        
+        if (modal && modalTitle && modalBody) {
+            modalTitle.textContent = filename;
+            
+            // JSON/JSONL 파싱 시도
+            let items = [];
+            try {
+                if (text.trim().startsWith('[')) {
+                    items = JSON.parse(text);
+                } else {
+                    items = text.trim().split('\n').map(line => {
+                        try { return JSON.parse(line); } catch(e) { return null; }
+                    }).filter(Boolean);
+                }
+            } catch(e) {
+                // 파싱 실패 시 원문 표시
+                modalBody.innerHTML = `<pre style="white-space: pre-wrap; font-size: 13px;">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`;
+                modal.classList.remove('hidden');
+                return;
+            }
+            
+            const isDark = document.body.classList.contains('dark-theme') || window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const darkClass = isDark ? 'dark-theme' : '';
+
+            let html = `
+<style>
+.chat-list { max-height: 70vh; overflow-y: auto; padding-right: 10px; }
+.chat-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; padding: 16px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; }
+.dark-theme .chat-container { background: var(--bg-card, #1e1e2e); border-color: var(--border, #2a2a35); }
+.chat-meta { font-size: 12px; color: #6b7280; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; display: flex; justify-content: space-between; }
+.dark-theme .chat-meta { color: #a1a1aa; border-color: var(--border, #3f3f46); }
+.risk-high { color: #ef4444; font-weight: bold; }
+.risk-medium { color: #f59e0b; font-weight: bold; }
+.risk-low { color: #10b981; font-weight: bold; }
+.chat-bubble-wrapper { display: flex; width: 100%; }
+.chat-bubble-wrapper.user { justify-content: flex-end; }
+.chat-bubble-wrapper.assistant { justify-content: flex-start; }
+.chat-bubble-wrapper.notice { justify-content: center; }
+.chat-bubble { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+.chat-bubble-wrapper.user .chat-bubble { background: #6366f1; color: white; border-bottom-right-radius: 2px; }
+.chat-bubble-wrapper.assistant .chat-bubble { background: #e5e7eb; color: #111827; border-bottom-left-radius: 2px; }
+.dark-theme .chat-bubble-wrapper.assistant .chat-bubble { background: #3f3f46; color: #f4f4f5; }
+.chat-bubble-wrapper.notice .chat-bubble { background: transparent; color: #9ca3af; font-size: 12px; text-align: center; font-style: italic; border: 1px dashed #d1d5db; border-radius: 6px; padding: 6px 12px; }
+.dark-theme .chat-bubble-wrapper.notice .chat-bubble { border-color: #52525b; }
+.chat-ending { margin-top: 8px; padding: 12px; background: #e0e7ff; border-radius: 8px; color: #4338ca; font-size: 13px; font-weight: 500; text-align: center; }
+.dark-theme .chat-ending { background: rgba(67, 56, 202, 0.2); color: #c7d2fe; }
+</style>
+<div class="chat-list ${darkClass}">
+            `;
+
+            if (items.length === 0) {
+                html += `<div style="padding:20px; text-align:center;">데이터가 없습니다.</div>`;
+            }
+
+            items.forEach((item, index) => {
+                const riskColor = item.risk_level === 'crisis' || item.risk_level === 'high' ? 'risk-high' 
+                                : item.risk_level === 'medium' ? 'risk-medium' : 'risk-low';
+                
+                html += `<div class="chat-container">
+                    <div class="chat-meta">
+                        <span><strong>ID:</strong> ${item.id}</span>
+                        <span><strong>Risk:</strong> <span class="${riskColor}">${item.risk_level?.toUpperCase() || 'UNKNOWN'}</span></span>
+                    </div>`;
+                    
+                if (item.conversation && Array.isArray(item.conversation)) {
+                    item.conversation.forEach(msg => {
+                        let cls = msg.role === 'user' ? 'user' : 'assistant';
+                        if (msg.type === 'notice') cls = 'notice';
+                        
+                        const msgText = (msg.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        
+                        html += `
+                        <div class="chat-bubble-wrapper ${cls}">
+                            <div class="chat-bubble">${msgText}</div>
+                        </div>`;
+                    });
+                }
+                
+                if (item.ending && item.ending.save_question) {
+                    const eq = item.ending.save_question.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    html += `<div class="chat-ending">${eq}</div>`;
+                }
+                
+                html += `</div>`;
+            });
+
+            html += `</div>`;
+            modalBody.innerHTML = html;
+            modal.classList.remove('hidden');
+        } else {
+            alert(text);
+        }
+    } catch (e) {
+        alert(`오류: ${e.message}`);
+    }
+}
+
+// 이벤트 바인딩
+document.addEventListener('DOMContentLoaded', () => {
+    const btnGen = document.getElementById('btnLwSimGenerate');
+    if (btnGen) btnGen.addEventListener('click', lwSimGenerate);
+
+    const btnEval = document.getElementById('btnLwSimEvaluate');
+    if (btnEval) btnEval.addEventListener('click', lwSimEvaluate);
+
+    const btnRefresh = document.getElementById('btnRefreshLwSimFiles');
+    if (btnRefresh) btnRefresh.addEventListener('click', lwSimLoadFiles);
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.dataset.tab === 'tab-lostway-sim') {
+                lwSimInit();
+            }
+        });
+    });
+});

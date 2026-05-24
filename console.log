@@ -1,0 +1,24 @@
+nohup: ignoring input
+Local AI Web Console
+URL: http://localhost:11004
+LAN URL: http://172.17.108.3:11004
+Press Ctrl+C to stop
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [27897]
+Terminated
+INFO:     Started server process [74004]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:11004 (Press CTRL+C to quit)
+INFO:     172.17.96.1:60339 - "GET / HTTP/1.1" 200 OK
+INFO:     172.17.96.1:60339 - "GET /static/app.js?v=20260505 HTTP/1.1" 200 OK
+INFO:     172.17.96.1:60339 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     172.17.96.1:60338 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     172.17.96.1:60340 - "GET /api/jobs HTTP/1.1" 200 OK
+INFO:     172.17.96.1:60341 - "GET /api/developer-requests HTTP/1.1" 200 OK
+INFO:     172.17.96.1:60342 - "GET /api/instruction-reviews HTTP/1.1" 200 OK
+INFO:     172.17.96.1:60343 - "GET /api/openclaw/config HTTP/1.1" 200 OK
+INFO:     172.17.96.1:60343 - "GET /api/lostway/simulation/files HTTP/1.1" 200 OK
+INFO:     172.17.96.1:60343 - "GET /api/lostway/simulation/files/lostway_simulation_0001_0020.jsonl/download HTTP/1.1" 200 OK

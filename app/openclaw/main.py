@@ -17,6 +17,8 @@ from . import ollama
 from . import router as intent_router
 from . import instruction
 from . import session_logger
+from app.local_ai_console import instruction_review
+import os
 from .config import CHAT_MODEL, CODE_MODEL
 
 app = FastAPI(
@@ -43,7 +45,12 @@ class ChatRequest(BaseModel):
     activeFile: str = ""
     selection: str = ""
     instructionPath: str = ""
-    mode: str = "auto"  # auto | chat | code
+    mode: str = "auto"  # auto | inspect | develop | etc.
+    model: str = "auto" # auto | gemma3:4b | qwen2.5-coder:7b
+    project: str = "ai-hub"
+    temperature: float = 0.2
+    usePipeline: bool = False
+    tools: list[str] = []
 
 
 class InstructionRunRequest(BaseModel):
@@ -129,19 +136,49 @@ async def chat_endpoint(req: ChatRequest):
 
     # 1. Classify intent and select model
     routing = await intent_router.classify_intent(req.message, req.mode)
-    model = routing["model"]
     route = routing["route"]
+    model = req.model if req.model != "auto" else routing["model"]
 
     # 2. Build context
     active_file_data = instruction.read_active_file(req.activeFile)
     active_file_content = active_file_data.get("content", "") if active_file_data.get("ok") else ""
     active_file_name = active_file_data.get("filename", "")
 
+    # 3. Pipeline execution (if requested)
+    pipeline_result = ""
+    if getattr(req, "usePipeline", False):
+        google_api_key = os.getenv("GOOGLE_API_KEY", "")
+        reviewer_mode = "google-eval-required-later" if google_api_key else "local-only"
+        
+        # Run the official review pipeline that saves to out/instruction-review
+        print(f"[Chat API] Running 3-Stage Pipeline (mode: {reviewer_mode})")
+        review_metadata = instruction_review.run_review(
+            title="VSCode Extension Request",
+            target_project=req.project,
+            request_type="VSCode Direct",
+            draft_instruction=req.message,
+            reviewer_mode=reviewer_mode,
+            google_api_key=google_api_key
+        )
+        
+        # Extract the final stage 3 output to override the instruction content
+        v4_path = review_metadata["files"]["v4_stage3"]
+        if os.path.isfile(v4_path):
+            with open(v4_path, "r", encoding="utf-8") as f:
+                pipeline_result = f.read()
+        print(f"[Chat API] 3-Stage Pipeline completed. Review ID: {review_metadata['review_id']}")
+
     system_prompt = instruction.build_system_prompt(
         workspace_root=req.workspaceRoot,
         active_file_content=active_file_content,
         active_file_name=active_file_name,
+        active_file_path=req.activeFile,
         selection=req.selection,
+        tools=req.tools,
+        mode=req.mode,
+        target_project=req.project,
+        temperature=req.temperature,
+        instruction_content=pipeline_result  # pipeline result or empty
     )
 
     messages = [
@@ -150,7 +187,7 @@ async def chat_endpoint(req: ChatRequest):
     ]
 
     # 3. Call Ollama
-    result = await ollama.chat(model=model, messages=messages)
+    result = await ollama.chat(model=model, messages=messages, temperature=req.temperature)
 
     if not result["ok"]:
         raise HTTPException(
@@ -164,7 +201,7 @@ async def chat_endpoint(req: ChatRequest):
         workspace_root=req.workspaceRoot,
         session_id=session_id,
         user_message=req.message,
-        instruction_path="",
+        instruction_path=req.instructionPath,
         active_file=req.activeFile,
         selection=req.selection,
         route=route,
@@ -172,6 +209,9 @@ async def chat_endpoint(req: ChatRequest):
         routing_reason=routing["reason"],
         answer=result["content"],
         mode=req.mode,
+        target_project=req.project,
+        temperature=req.temperature,
+        enabled_tools=req.tools,
     )
 
     return {

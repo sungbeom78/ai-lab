@@ -31,7 +31,11 @@ def save_session_log(
     model: str,
     routing_reason: str,
     answer: str,
-    mode: str = "auto",
+    mode: str = "develop",
+    target_project: str = "",
+    temperature: float = 0.2,
+    enabled_tools: list[str] = None,
+    evidence_files: list[str] = None,
 ) -> str:
     """Save a session log as a Markdown file.
 
@@ -42,16 +46,25 @@ def save_session_log(
     log_path = os.path.join(session_dir, f"{session_id}.md")
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    tools_str = ", ".join(enabled_tools) if enabled_tools else "(none)"
+    evidence_str = "\n".join(f"- {f}" for f in (evidence_files or [])) or "(none)"
 
     content = f"""# OpenClaw Session Log
 
-- **Session ID**: {session_id}
-- **Timestamp**: {timestamp}
-- **Workspace**: {workspace_root}
-- **Mode**: {mode}
-- **Route**: {route}
-- **Model**: {model}
-- **Routing Reason**: {routing_reason}
+## Context
+
+| Field | Value |
+|-------|-------|
+| **Session ID** | {session_id} |
+| **Timestamp** | {timestamp} |
+| **Workspace** | {workspace_root} |
+| **Target Project** | {target_project or "(none)"} |
+| **Mode** | {mode} |
+| **Temperature** | {temperature} |
+| **Enabled Tools** | {tools_str} |
+| **Route** | {route} |
+| **Model** | {model} |
+| **Routing Reason** | {routing_reason} |
 
 ## User Request
 
@@ -63,6 +76,10 @@ def save_session_log(
 
 {user_message}
 
+## Evidence Files Referenced
+
+{evidence_str}
+
 ## Response
 
 {answer}
@@ -73,7 +90,7 @@ def save_session_log(
 
 ## Files Changed
 
-(none - MVP read-only mode)
+(none — MVP: edit/execute require user approval)
 """
 
     with open(log_path, "w", encoding="utf-8") as f:

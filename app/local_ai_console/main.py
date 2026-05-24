@@ -17,6 +17,7 @@ from . import history_writer
 from . import safe_apply
 from . import instruction_review as ir_module
 from . import developer_request_writer as dr_writer
+from . import lostway_conversation_log as lw_log
 
 app = FastAPI(title="Local AI Web Console")
 app.include_router(safe_apply.router, prefix="/api")
@@ -24,6 +25,7 @@ app.include_router(safe_apply.router, prefix="/api")
 # Setup static and templates
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+app.mount("/site-ahnda", StaticFiles(directory="/project/site/ahnda", html=True), name="site-ahnda")
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 class JobRequest(BaseModel):
@@ -264,7 +266,150 @@ async def get_developer_request(request_id: str):
 @app.get("/api/openclaw/config")
 async def get_openclaw_config():
     return {
-        "web_url": os.getenv("OPENCLAW_WEB_URL", "http://127.0.0.1:11006"),
-        "api_url": os.getenv("OPENCLAW_API_URL", "http://127.0.0.1:11006")
+        "web_url": os.getenv("OPENCLAW_WEB_URL", "http://127.0.0.1:11005"),
+        "api_url": os.getenv("OPENCLAW_API_URL", "http://127.0.0.1:11005")
     }
 
+
+# ─── Lostway Conversation Logs ────────────────────────────────────────────
+
+class LostwayConvLogRequest(BaseModel):
+    title: str
+    content: str
+    date: Optional[str] = None
+    participants: Optional[list[str]] = None
+    type: str = "planning"
+    tags: Optional[list[str]] = None
+    memo: str = ""
+    filename: str = ""
+
+
+# @app.post("/api/lostway/conversation-logs")
+async def create_lostway_conversation_log(req: LostwayConvLogRequest):
+    try:
+        result = lw_log.save_conversation_log(
+            title=req.title,
+            content=req.content,
+            date=req.date,
+            participants=req.participants,
+            conv_type=req.type,
+            tags=req.tags,
+            memo=req.memo,
+            filename=req.filename,
+        )
+        return result
+    except ValueError as e:
+        return JSONResponse(status_code=400, content={"ok": False, "error": str(e)})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"ok": False, "error": str(e)})
+
+
+# @app.get("/api/lostway/conversation-logs")
+async def list_lostway_conversation_logs():
+    try:
+        items = lw_log.list_conversation_logs(limit=30)
+        return {"ok": True, "items": items}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"ok": False, "error": str(e)})
+
+
+# @app.get("/api/lostway/conversation-logs/{filename}", response_class=PlainTextResponse)
+async def get_lostway_conversation_log(filename: str):
+    try:
+        content = lw_log.read_conversation_log(filename)
+        return content
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="File not found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ─── Lostway Simulation ────────────────────────────────────────────────────
+
+class LostwaySimGenRequest(BaseModel):
+    count: int = 20
+
+class LostwaySimEvalRequest(BaseModel):
+    percent: int = 1
+
+@app.post("/api/lostway/simulation/generate")
+async def generate_lostway_simulation(req: LostwaySimGenRequest):
+    import subprocess
+    cmd = ["python", "/project/lostway/simulation/generate_lostway_simulation.py", "--count", str(req.count), "--batch-size", "100"]
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return {"ok": True, "output": res.stdout}
+    except subprocess.CalledProcessError as e:
+        return JSONResponse(status_code=500, content={"ok": False, "error": e.stderr})
+
+@app.post("/api/lostway/simulation/evaluate")
+async def evaluate_lostway_simulation(req: LostwaySimEvalRequest):
+    import subprocess
+    script_path = "/project/lostway/simulation/evaluate_lostway_simulation.py"
+    if not os.path.exists(script_path):
+        return JSONResponse(status_code=404, content={"ok": False, "error": "Evaluation script not found"})
+    cmd = ["python", script_path, "--percent", str(req.percent)]
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return {"ok": True, "output": res.stdout}
+    except subprocess.CalledProcessError as e:
+        return JSONResponse(status_code=500, content={"ok": False, "error": e.stderr})
+
+@app.get("/api/lostway/simulation/files")
+async def get_lostway_simulation_files():
+    out_dir = "/project/lostway/simulation/out"
+    eval_dir = "/project/lostway/simulation/eval"
+    files = []
+    if os.path.exists(out_dir):
+        files.extend(glob.glob(os.path.join(out_dir, "*.jsonl")))
+    if os.path.exists(eval_dir):
+        files.extend(glob.glob(os.path.join(eval_dir, "*.json")))
+    files.sort(key=os.path.getmtime, reverse=True)
+    items = []
+    for f in files:
+        items.append({"name": os.path.basename(f), "size": os.path.getsize(f), "path": f})
+    return {"files": items}
+
+from fastapi.responses import FileResponse
+
+@app.get("/api/lostway/simulation/files/{filename}/download")
+async def download_lostway_simulation_file(filename: str):
+    import re
+    if not re.match(r"^[a-zA-Z0-9_\-\.]+$", filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    
+    out_dir = "/project/lostway/simulation/out"
+    eval_dir = "/project/lostway/simulation/eval"
+    
+    fpath = os.path.join(out_dir, filename)
+    if not os.path.isfile(fpath):
+        fpath = os.path.join(eval_dir, filename)
+        if not os.path.isfile(fpath):
+            raise HTTPException(status_code=404, detail="File not found")
+            
+    return FileResponse(path=fpath, filename=filename, media_type='application/octet-stream')
+
+@app.get("/api/lostway/simulation/files/{filename}", response_class=PlainTextResponse)
+async def get_lostway_simulation_file(filename: str):
+    import re
+    if not re.match(r"^[a-zA-Z0-9_\-\.]+$", filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    
+    out_dir = "/project/lostway/simulation/out"
+    eval_dir = "/project/lostway/simulation/eval"
+    
+    fpath = os.path.join(out_dir, filename)
+    if not os.path.isfile(fpath):
+        fpath = os.path.join(eval_dir, filename)
+        if not os.path.isfile(fpath):
+            raise HTTPException(status_code=404, detail="File not found")
+            
+    with open(fpath, "r", encoding="utf-8") as f:
+        content = ""
+        for i, line in enumerate(f):
+            if i >= 100:
+                content += "\n... (truncated to 100 lines) ...\n"
+                break
+            content += line
+        return content
